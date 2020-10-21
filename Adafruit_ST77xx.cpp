@@ -1,3 +1,4 @@
+
 /**************************************************************************
   This is a library for several Adafruit displays based on ST77* drivers.
 
@@ -24,13 +25,15 @@
 
 #include "Adafruit_ST77xx.h"
 #include <limits.h>
+
 #ifndef ARDUINO_STM32_FEATHER
-#include "pins_arduino.h"
-#include "wiring_private.h"
+	#include "pins_arduino.h"
+	#include "wiring_private.h"
 #endif
+
 #include <SPI.h>
 
-#define SPI_DEFAULT_FREQ 32000000 ///< Default SPI data clock frequency
+#define SPI_DEFAULT_FREQ	32000000		///< Default SPI data clock frequency
 
 /**************************************************************************/
 /*!
@@ -45,10 +48,10 @@
     @param  miso  SPI MISO pin # (optional, pass -1 if unused)
 */
 /**************************************************************************/
-Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc,
-                                 int8_t mosi, int8_t sclk, int8_t rst,
-                                 int8_t miso)
-    : Adafruit_SPITFT(w, h, cs, dc, mosi, sclk, rst, miso) {}
+Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc, int8_t mosi, int8_t sclk, int8_t rst, int8_t miso)
+		: Adafruit_SPITFT(w, h, cs, dc, mosi, sclk, rst, miso)
+{
+}
 
 /**************************************************************************/
 /*!
@@ -60,9 +63,10 @@ Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc,
     @param  rst   Reset pin # (optional, pass -1 if unused)
 */
 /**************************************************************************/
-Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc,
-                                 int8_t rst)
-    : Adafruit_SPITFT(w, h, cs, dc, rst) {}
+Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc, int8_t rst)
+		: Adafruit_SPITFT(w, h, cs, dc, rst)
+{
+}
 
 #if !defined(ESP8266)
 /**************************************************************************/
@@ -76,10 +80,12 @@ Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc,
     @param  rst   Reset pin # (optional, pass -1 if unused)
 */
 /**************************************************************************/
-Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, SPIClass *spiClass,
-                                 int8_t cs, int8_t dc, int8_t rst)
-    : Adafruit_SPITFT(w, h, spiClass, cs, dc, rst) {}
-#endif // end !ESP8266
+Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, SPIClass *spiClass, int8_t cs, int8_t dc, int8_t rst)
+		: Adafruit_SPITFT(w, h, spiClass, cs, dc, rst)
+{
+}
+
+#endif		// end !ESP8266
 
 /**************************************************************************/
 /*!
@@ -88,27 +94,26 @@ Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, SPIClass *spiClass,
     @param  addr  Flash memory array with commands and data to send
 */
 /**************************************************************************/
-void Adafruit_ST77xx::displayInit(const uint8_t *addr) {
+void	Adafruit_ST77xx::displayInit(const uint8_t *addr)
+{
+	uint8_t		numCommands, cmd, numArgs;
+	uint16_t	ms;
 
-  uint8_t numCommands, cmd, numArgs;
-  uint16_t ms;
+	numCommands = pgm_read_byte(addr++);		// Number of commands to follow
+	while (numCommands--) {		// For each command...
+		cmd = pgm_read_byte(addr++);			// Read command
+		numArgs = pgm_read_byte(addr++);		// Number of args to follow
+		ms = numArgs & ST_CMD_DELAY;			// If hibit set, delay follows args
+		numArgs &= ~ST_CMD_DELAY;			// Mask out delay bit
+		sendCommand(cmd, addr, numArgs);
+		addr += numArgs;
 
-  numCommands = pgm_read_byte(addr++); // Number of commands to follow
-  while (numCommands--) {              // For each command...
-    cmd = pgm_read_byte(addr++);       // Read command
-    numArgs = pgm_read_byte(addr++);   // Number of args to follow
-    ms = numArgs & ST_CMD_DELAY;       // If hibit set, delay follows args
-    numArgs &= ~ST_CMD_DELAY;          // Mask out delay bit
-    sendCommand(cmd, addr, numArgs);
-    addr += numArgs;
-
-    if (ms) {
-      ms = pgm_read_byte(addr++); // Read post-command delay time (ms)
-      if (ms == 255)
-        ms = 500; // If 255, delay for 500 ms
-      delay(ms);
-    }
-  }
+		if (ms) {
+			ms = pgm_read_byte( addr++ );		// Read post-command delay time (ms)
+			if (ms == 255) ms = 500;		// If 255, delay for 500 ms
+			delay(ms);
+		}
+	}
 }
 
 /**************************************************************************/
@@ -118,16 +123,17 @@ void Adafruit_ST77xx::displayInit(const uint8_t *addr) {
     @param  freq  Desired SPI clock frequency
 */
 /**************************************************************************/
-void Adafruit_ST77xx::begin(uint32_t freq) {
-  if (!freq) {
-    freq = SPI_DEFAULT_FREQ;
-  }
-  _freq = freq;
+void	Adafruit_ST77xx::begin(uint32_t freq)
+{
+	if ( ! freq ) {
+		freq = SPI_DEFAULT_FREQ;
+	}
+	_freq = freq;
 
-  invertOnCommand = ST77XX_INVON;
-  invertOffCommand = ST77XX_INVOFF;
+	invertOnCommand = ST77XX_INVON;
+	invertOffCommand = ST77XX_INVOFF;
 
-  initSPI(freq, spiMode);
+	initSPI(freq, spiMode);
 }
 
 /**************************************************************************/
@@ -136,12 +142,13 @@ void Adafruit_ST77xx::begin(uint32_t freq) {
     @param  cmdList  Flash memory array with commands and data to send
 */
 /**************************************************************************/
-void Adafruit_ST77xx::commonInit(const uint8_t *cmdList) {
-  begin();
+void	Adafruit_ST77xx::commonInit(const uint8_t *cmdList)
+{
+	begin();
 
-  if (cmdList) {
-    displayInit(cmdList);
-  }
+	if (cmdList) {
+		displayInit(cmdList);
+	}
 }
 
 /**************************************************************************/
@@ -153,20 +160,21 @@ void Adafruit_ST77xx::commonInit(const uint8_t *cmdList) {
   @param  h  Height of window
 */
 /**************************************************************************/
-void Adafruit_ST77xx::setAddrWindow(uint16_t x, uint16_t y, uint16_t w,
-                                    uint16_t h) {
-  x += _xstart;
-  y += _ystart;
-  uint32_t xa = ((uint32_t)x << 16) | (x + w - 1);
-  uint32_t ya = ((uint32_t)y << 16) | (y + h - 1);
+void	Adafruit_ST77xx::setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
+{
+	x += _xstart;
+	y += _ystart;
 
-  writeCommand(ST77XX_CASET); // Column addr set
-  SPI_WRITE32(xa);
+	uint32_t	xa = ((uint32_t)x << 16) | (x + w - 1);
+	uint32_t	ya = ((uint32_t)y << 16) | (y + h - 1);
 
-  writeCommand(ST77XX_RASET); // Row addr set
-  SPI_WRITE32(ya);
+	writeCommand(ST77XX_CASET);		// Column addr set
+	SPI_WRITE32(xa);
 
-  writeCommand(ST77XX_RAMWR); // write to RAM
+	writeCommand(ST77XX_RASET);		// Row addr set
+	SPI_WRITE32(ya);
+
+	writeCommand(ST77XX_RAMWR);		// write to RAM
 }
 
 /**************************************************************************/
@@ -175,35 +183,39 @@ void Adafruit_ST77xx::setAddrWindow(uint16_t x, uint16_t y, uint16_t w,
     @param  m  The index for rotation, from 0-3 inclusive
 */
 /**************************************************************************/
-void Adafruit_ST77xx::setRotation(uint8_t m) {
-  uint8_t madctl = 0;
+void Adafruit_ST77xx::setRotation(uint8_t m)
+{
+	uint8_t		madctl = 0;
 
-  rotation = m % 4; // can't be higher than 3
+	rotation = m % 4;		// can't be higher than 3
 
-  switch (rotation) {
-  case 0:
-    madctl = ST77XX_MADCTL_MX | ST77XX_MADCTL_MY | ST77XX_MADCTL_RGB;
-    _xstart = _colstart;
-    _ystart = _rowstart;
-    break;
-  case 1:
-    madctl = ST77XX_MADCTL_MY | ST77XX_MADCTL_MV | ST77XX_MADCTL_RGB;
-    _ystart = _colstart;
-    _xstart = _rowstart;
-    break;
-  case 2:
-    madctl = ST77XX_MADCTL_RGB;
-    _xstart = _colstart;
-    _ystart = _rowstart;
-    break;
-  case 3:
-    madctl = ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST77XX_MADCTL_RGB;
-    _ystart = _colstart;
-    _xstart = _rowstart;
-    break;
-  }
+	switch (rotation) {
+	case 0:
+		madctl = ST77XX_MADCTL_MX | ST77XX_MADCTL_MY | ST77XX_MADCTL_RGB;
+		_xstart = _colstart;
+		_ystart = _rowstart;
+		break;
 
-  sendCommand(ST77XX_MADCTL, &madctl, 1);
+	case 1:
+		madctl = ST77XX_MADCTL_MY | ST77XX_MADCTL_MV | ST77XX_MADCTL_RGB;
+		_ystart = _colstart;
+		_xstart = _rowstart;
+		break;
+
+	case 2:
+		madctl = ST77XX_MADCTL_RGB;
+		_xstart = _colstart;
+		_ystart = _rowstart;
+		break;
+
+	case 3:
+		madctl = ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST77XX_MADCTL_RGB;
+		_ystart = _colstart;
+		_xstart = _rowstart;
+		break;
+	}
+
+	sendCommand(ST77XX_MADCTL, &madctl, 1);
 }
 
 /**************************************************************************/
@@ -213,9 +225,10 @@ void Adafruit_ST77xx::setRotation(uint8_t m) {
     @param  row  The offset from 0 for the row address
 */
 /**************************************************************************/
-void Adafruit_ST77xx::setColRowStart(int8_t col, int8_t row) {
-  _colstart = col;
-  _rowstart = row;
+void	Adafruit_ST77xx::setColRowStart(int8_t col, int8_t row)
+{
+	_colstart = col;
+	_rowstart = row;
 }
 
 /**************************************************************************/
@@ -224,8 +237,9 @@ void Adafruit_ST77xx::setColRowStart(int8_t col, int8_t row) {
  @param  enable True if you want the display ON, false OFF
  */
 /**************************************************************************/
-void Adafruit_ST77xx::enableDisplay(boolean enable) {
-  sendCommand(enable ? ST77XX_DISPON : ST77XX_DISPOFF);
+void	Adafruit_ST77xx::enableDisplay(boolean enable)
+{
+	sendCommand(enable ? ST77XX_DISPON : ST77XX_DISPOFF);
 }
 
 /**************************************************************************/
@@ -234,11 +248,12 @@ void Adafruit_ST77xx::enableDisplay(boolean enable) {
  @param  enable True if you want the TE pin ON, false OFF
  */
 /**************************************************************************/
-void Adafruit_ST77xx::enableTearing(boolean enable) {
-  sendCommand(enable ? ST77XX_TEON : ST77XX_TEOFF);
+void	Adafruit_ST77xx::enableTearing(boolean enable)
+{
+	sendCommand(enable ? ST77XX_TEON : ST77XX_TEOFF);
 }
 
-////////// stuff not actively being used, but kept for posterity
+//////// // stuff not actively being used, but kept for posterity
 /*
 
  uint8_t Adafruit_ST77xx::spiread(void) {
